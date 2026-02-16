@@ -1,4 +1,6 @@
+import { getNotes } from '@/lib';
 import { electronApp, is, optimizer } from '@electron-toolkit/utils';
+import { GetNotes } from '@shared/types';
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { join } from 'path';
 import icon from '../../resources/icon.png?asset';
@@ -12,6 +14,13 @@ function createWindow(): void
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),
+    center: true,
+    title: "Note-Taker",
+    frame: false,
+    vibrancy: "under-window",
+    visualEffectState: "active",
+    titleBarStyle: "hidden",
+    trafficLightPosition: { x: 15, y: 10 },
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: true, // Enable sandbox for all renderers
@@ -55,8 +64,12 @@ app.whenReady().then(() =>
     optimizer.watchWindowShortcuts(window);
   });
 
+
+
   // IPC test
   ipcMain.on('ping', () => console.log('pong'));
+
+  ipcMain.handle("get-notes", (_, ...args: Parameters<GetNotes>) => getNotes(...args));
 
   createWindow();
 

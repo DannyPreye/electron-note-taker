@@ -1,2 +1,23 @@
 @import './base.css';
 @import 'tailwindcss';
+@plugin '@tailwindcss/typography';
+
+header {
+  -webkit-app-region: drag;
+}
+
+button {
+  -webkit-app-region: no-drag;
+}
+
+::-webkit-scrollbar {
+  @apply w-2;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-400 rounded-lg;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-transparent;
+}

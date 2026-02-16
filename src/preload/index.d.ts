@@ -1,9 +1,13 @@
+import { GetNotes } from "@shared/types";
 
 declare global
 {
   interface Window
   {
-    context: {};
+    context: {
+      locale: string;
+      getNotes: GetNotes;
+    };
     // electron: ElectronAPI
     // api: unknown
   }
