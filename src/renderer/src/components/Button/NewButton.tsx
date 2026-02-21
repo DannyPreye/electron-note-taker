@@ -5,9 +5,8 @@ import { LuFile } from 'react-icons/lu'
 export const NewNoteButton = ({}: ActionButtonProps) => {
   const createNewNote = useSetAtom(createEmptyNoteAtom)
 
-  const handleClick = () => {
-    console.log('Creating new note...')
-    createNewNote()
+  const handleClick = async () => {
+    await createNewNote()
   }
 
   return (

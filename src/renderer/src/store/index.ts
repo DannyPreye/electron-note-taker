@@ -1,4 +1,4 @@
-import { NoteInfo } from "@shared/models";
+import { NoteContent, NoteInfo } from "@shared/models";
 import { atom } from "jotai";
 import { unwrap } from "jotai/utils";
 
@@ -20,7 +20,7 @@ export const notesAtom = unwrap(notesAtomAsync, (prev) => prev);
 
 export const selectedNoteIndexAtom = atom<number | null>(0);
 
-export const selectedNoteAtom = atom(get =>
+const selectedNoteAtomAsync = atom(async (get) =>
 {
     const notes = get(notesAtom);
     const idx = get(selectedNoteIndexAtom);
@@ -29,17 +29,28 @@ export const selectedNoteAtom = atom(get =>
     if (idx === null || !notes) return null;
     const selectedNote = notes[ idx ];
 
+    const noteContent = await window.context.readNote(selectedNote.title);
+
     return {
         ...selectedNote,
-        content: selectedNote ? `# ${selectedNote?.title}\n\nLast edited: ${new Date(selectedNote?.lastEditTime).toLocaleString()}\n\n---\n\nThis is the content of the note. You can edit this markdown content in the editor on the right.` : ""
+        content: noteContent
     };
 });
 
-export const createEmptyNoteAtom = atom(null, (get, set) =>
+
+export const selectedNoteAtom = unwrap(selectedNoteAtomAsync, (prev) => prev ?? {
+    title: "",
+    content: "",
+    lastEditTime: Date.now()
+});
+
+export const createEmptyNoteAtom = atom(null, async (get, set) =>
 {
     const notes = get(notesAtom);
     if (!notes) return;
-    const title = `Untitled Note ${notes.length + 1}`;
+    const title = await window.context.createNote();
+
+    if (!title) return;
     const newNote: NoteInfo = {
         title,
         lastEditTime: Date.now()
@@ -50,14 +61,37 @@ export const createEmptyNoteAtom = atom(null, (get, set) =>
 });
 
 
-export const deleteSelectedNoteAtom = atom(null, (get, set) =>
+export const deleteSelectedNoteAtom = atom(null, async (get, set) =>
 {
     const notes = get(notesAtom);
     const idx = get(selectedNoteIndexAtom);
     if (idx === null || !notes) return; // No note selected
 
+    const isDeleted = await window.context.deleteNote(notes[ idx ].title);
+
+
+    if (!isDeleted) return; // Deletion failed, maybe show an error message
+
     const noteToDelete = notes[ idx ];
     const updatedNotes = notes.filter(note => note.title !== noteToDelete.title);
     set(notesAtom, updatedNotes);
     set(selectedNoteIndexAtom, updatedNotes.length > 0 ? 0 : null); // Select the first note or null if no notes left
+});
+
+
+export const saveNoteAtom = atom(null, async (get, set, note: NoteContent) =>
+{
+    const notes = get(notesAtom);
+    const idx = get(selectedNoteIndexAtom);
+    if (idx === null || !notes) return; // No note selected
+
+    // Save
+    await window.context.writeNote(notes[ idx ].title, note);
+
+    // Update lastEditTime
+    const updatedNote: NoteInfo = {
+        ...notes[ idx ],
+        lastEditTime: Date.now()
+    };
+    set(notesAtom, notes.map((note) => note.title === updatedNote.title ? updatedNote : note));
 });

@@ -1,6 +1,6 @@
-import { getNotes } from '@/lib';
+import { createNote, deleteNote, getNotes, readNote, writeNote } from '@/lib';
 import { electronApp, is, optimizer } from '@electron-toolkit/utils';
-import { GetNotes } from '@shared/types';
+import { CreateNote, DeleteNote, GetNotes, ReadNote, WriteNote } from '@shared/types';
 import { app, BrowserWindow, ipcMain, shell } from 'electron';
 import { join } from 'path';
 import icon from '../../resources/icon.png?asset';
@@ -70,8 +70,14 @@ app.whenReady().then(() =>
   ipcMain.on('ping', () => console.log('pong'));
 
   ipcMain.handle("get-notes", (_, ...args: Parameters<GetNotes>) => getNotes(...args));
+  ipcMain.handle("read-note", (_, ...args: Parameters<ReadNote>) => readNote(...args));
 
+  ipcMain.handle("write-note", async (_, ...args: Parameters<WriteNote>) => writeNote(...args));
+
+  ipcMain.handle("create-note", async (_, ...args: Parameters<CreateNote>) => createNote(...args));
   createWindow();
+
+  ipcMain.handle("delete-note", async (_, ...args: Parameters<DeleteNote>) => deleteNote(...args));
 
   app.on('activate', function ()
   {
